@@ -4,26 +4,56 @@
 
 条件分岐のついた生成メソッドを持つクラスのこと。
 渡されたオブジェクトの種類や引数によって作るインスタンスを変える。
-メリットは似たような生成ロジックをまとめることができること。
-デメリットは、オブジェクトの種類や引数が増えていくとそれと共にクラスが巨大化していくこと。
+メリットはわかりやすいことと、似たようなオブジェクトの生成ロジックをまとめることができること。
+デメリットは、オブジェクトの種類や引数が増えていくと、共にクラスが巨大化していくこと。
+引数で切り替えるオブジェクトを管理する必要があること。
+（手を入れる際はメソッドの中身と引数を照らし合わせてどんなオブジェクトが作られるか把握する必要がある）
 
-### クラス図
+これはGoFのデザインパターンには含まれていない。
+
+### 単純ファクトリーパターンのクラス図
 
 ```mermaid
 classDiagram
-    HumanFactory: +create_human(作りたい人間)
+    class Human {
+        +speak()
+    }
+
+    class Child {
+        +speak()
+    }
+
+    class Adult {
+        +speak()
+    }
+
+    class HumanFactory {
+        +create_human(human_type)
+    }
+
+    HumanFactory --> Human
+    Human <|-- Child
+    Human <|-- Adult
 ```
 
-### 具体的なコード
+### 単純ファクトリーパターンの具体的なコード
 
-このくらいのFacoryなら整理しやすい
+人間オブジェクトを作るメソッドを持ったクラス
+大人 or 子供 くらいであれば単純ファクトリーで良さそう
 
 ```python
-class Child:
+from abc import ABC, abstractmethod
+
+class Human(ABC):
+    @abstractmethod
+    def speak(self):
+        pass
+
+class Child(Human):
     def speak(self):
         print("子供です！！！！")
 
-class Adult:
+class Adult(Human):
     def speak(self):
         print("大人です！！！！")
 
@@ -34,13 +64,17 @@ class HumanFactory:
             return Child()
         if human_type == "大人":
             return Adult()
+
+human = HumanFactory.create_human("子供")
+human.speak() # 子供です！！！！
 ```
 
-こうなってくるとやばい
+新しく人間オブジェクトを増やそうかな、create_humanメソッドに手を入れることになるが
+オブジェクトの種類が増えると、以下のように複雑になりがち
 
 ```python
 class HumanFactory:
-    def create_human(human_type):
+    def create_human(human_type, sex, age):
         if human_type == "赤ちゃん":
             return Baby()
         if human_type == "子供":
@@ -50,17 +84,56 @@ class HumanFactory:
         if human_type == "高校生":
             return Highschool()
         if human_type == "大人":
-            return Adult()
-        if human_type == "おじいさん":
-            return Adult2()
-        if human_type == "おばあさん":
-            return Adult3()
+            if sex == "男":
+                return Adult()
+            if sex == "女":
+                return Adult2()
+        if age == 60 and sex == "男":
+            return ojiisan()
+        if age == 60 and sex == "女":
+            return obaasan()
+
+human = HumanFactory.create_human("年配", "男", 60) # 何が返ってくるんだろう？ってなりがち
+human.speak() # おじいさんです！！！！
 ```
+
+時間が経つにつれて、オブジェクトの種類が増えていくと、管理が大変になってくる。
+その時になって初めて、GoFのファクトリーメソッドパターンやAbstractFactoryパターンを使うと良さそう。
+もちろん、作るオブジェクトが最初から増える見込みであればファクトリーメソッドやAbstractFactoryパターンを使ってもいいと思う。
+
+(調べたところ現実ではこの単純ファクトリーでの実装が多いとのこと、やっぱりわかりやすいから？)
 
 ## ファクトリーメソッドパターン
 
 Gofの生成デザインパターンの一つ。
-インスタンスの作り方をスーパークラスで決めて、サブクラスで具体的な作り方を決めるやり方。
+抽象クラスで生成するオブジェクトのインターフェースを設定し、それを元にサブクラスで具体的なオブジェクトを生成する。
+
+### ファクトリーメソッドパターンのクラス図
+
+```mermaid
+classDiagram
+
+    class HumanFactory {
+        +create_human(): Human
+    }
+
+    class ChildFactory {
+        +create_human(): Child
+    }
+
+    class AdultFactory {
+        +create_human(): Adult
+    }
+
+    HumanFactory <|-- ChildFactory
+    HumanFactory <|-- AdultFactory
+```
+
+## ファクトリーメソッドパターンの具体的なコード
+
+```python
+
+```
 
 ## まとめ
 

@@ -41,6 +41,17 @@ classDiagram
 人間オブジェクトを作るメソッドを持ったクラス
 大人 or 子供 くらいであれば単純ファクトリーで良さそう
 
+```mermaid
+classDiagram
+  HumanFactory <|.. Child
+  HumanFactory <|.. Adult
+
+
+  HumanFactory : +create_human(human_type)
+  Child : +speak()
+  Adult : +speak()
+```
+
 ```python
 from abc import ABC, abstractmethod
 
@@ -72,6 +83,20 @@ human.speak() # 子供です！！！！
 新しく人間オブジェクトを増やそうかな、create_humanメソッドに手を入れることになるが
 オブジェクトの種類が増えると、以下のように複雑になりがち
 
+```mermaid
+classDiagram
+  HumanFactory <|.. Baby
+  HumanFactory <|.. Child
+  HumanFactory <|.. Junior
+  HumanFactory <|.. Highschool
+  HumanFactory <|.. Adult
+  HumanFactory <|.. Adult2
+  HumanFactory <|.. ojiisan
+  HumanFactory <|.. obaasan
+
+  HumanFactory : create_human(human_type, sex, age)
+  ```
+
 ```python
 class HumanFactory:
     def create_human(human_type, sex, age):
@@ -88,12 +113,12 @@ class HumanFactory:
                 return Adult()
             if sex == "女":
                 return Adult2()
-        if age == 60 and sex == "男":
+        if age >= 60 and sex == "男":
             return ojiisan()
-        if age == 60 and sex == "女":
+        if age >= 60 and sex == "女":
             return obaasan()
 
-human = HumanFactory.create_human("年配", "男", 60) # 何が返ってくるんだろう？ってなりがち
+human = HumanFactory.create_human("年配", "男", 60)
 human.speak() # おじいさんです！！！！
 ```
 
@@ -128,10 +153,127 @@ classDiagram
     HumanFactory <|-- ChildFactory
     HumanFactory <|-- AdultFactory
 ```
+```mermaid
+classDiagram
+
+
+    class HumanFactory {
+        +create_human(): Human
+    }
+
+    class BabyFactory {
+        +create_human(): Baby
+    }
+
+    class ChildFactory {
+        +create_human(): Child
+    }
+
+    class JuniorFactory {
+        +create_human(): Junior
+    }
+
+    class HighschoolFactory {
+        +create_human(): Highschool
+    }
+
+    class AdultFactory {
+        +create_human(): Adult
+    }
+
+    class OjiisanFactory {
+        +create_human(): Ojiisan
+    }
+
+    class ObaasanFactory {
+        +create_human(): Obaasan
+    }
+
+    HumanFactory <|-- BabyFactory
+    HumanFactory <|-- ChildFactory
+    HumanFactory <|-- JuniorFactory
+    HumanFactory <|-- HighschoolFactory
+    HumanFactory <|-- AdultFactory
+    HumanFactory <|-- OjiisanFactory
+    HumanFactory <|-- ObaasanFactory
+```
 
 ## ファクトリーメソッドパターンの具体的なコード
 
 ```python
+from abc import ABC, abstractmethod
+
+class Human(ABC):
+    @abstractmethod
+    def speak(self):
+        pass
+
+class HumanFactory(ABC):
+    @abstractmethod
+    def create_human(self):
+        pass
+
+class BabyFactory(HumanFactory):
+    def create_human(self):
+        return Baby()
+
+class ChildFactory(HumanFactory):
+    def create_human(self):
+        return Child()
+
+class JuniorFactory(HumanFactory):
+    def create_human(self):
+        return Junior()
+
+class HighschoolFactory(HumanFactory):
+    def create_human(self):
+        return Highschool()
+
+class AdultFactory(HumanFactory):
+    def __init__(self, sex):
+        self.sex = sex
+
+    def create_human(self):
+        if self.sex == "男":
+            return Adult()
+        else:
+            return Adult2()
+
+class OjiisanFactory(HumanFactory):
+    def __init__(self, sex, age=60):
+        self.sex = sex
+        self.age = age
+
+    def create_human(self):
+        if self.age >= 60 and self.sex == "男":
+            return Ojiisan()
+        return None
+
+class ObaasanFactory(HumanFactory):
+    def __init__(self, sex, age=60):
+        self.sex = sex
+        self.age = age
+
+    def create_human(self):
+        if self.age >= 60 and self.sex == "女":
+            return Obaasan()
+        return None
+
+def get_human_factory(human_type, sex=None, age=None):
+    if human_type == "赤ちゃん":
+        return BabyFactory()
+    if human_type == "子供":
+        return ChildFactory()
+    if human_type == "中学生":
+        return JuniorFactory()
+    if human_type == "高校生":
+        return HighschoolFactory()
+    if human_type == "大人":
+        return AdultFactory(sex)
+    if human_type == "おじいさん":
+        return OjiisanFactory(sex, age)
+    if human_type == "おばあさん":
+        return ObaasanFactory(sex, age)
 
 ```
 
